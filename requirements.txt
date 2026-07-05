@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pytest
+requests
+allure-pytest
+pydantic
+pytest-mock
+faker
+pyjwt

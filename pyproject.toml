@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+addopts = [
+    "-v", 
+    "-s", 
+    "--cov=app", 
+    "--cov-report=term-missing", 
+    "--alluredir=allure-results"
+]
+
+testpaths = ["tests"]
+
+markers = [
+    "smoke: критически важные тесты (запускаются в первую очередь)",
+    "regression: полный регресс платформы",
+    "negative: проверки на обработку ошибок и невалидных данных"
+]
