@@ -26,7 +26,7 @@ jobs:
 
     - name: Run Pytest
       env:
-        PYTHONOATH: .
+        PYTHONPATH: .
       run: |
         pytest --alluredir=allure-results
       continue-on-error: true 
