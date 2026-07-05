@@ -7,3 +7,4 @@ pydantic
 pytest-mock
 faker
 pyjwt
+pytest-cov
