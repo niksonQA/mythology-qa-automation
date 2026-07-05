@@ -44,9 +44,16 @@ jobs:
         retention-days: 1
 
     - name: Send Telegram Notification
-      if: always()
+      if: always()  
       uses: appleboy/telegram-action@master
       with:
-        to: ${{ secrets.TELEGRAM_TO }}
+        to: ${{ secrets.TELEGRAM_T0 }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: Pipeline finished. Status is ${{ job.status }}
+        message: |
+          🚀 *GitHub Actions Report*
+          
+          Репозиторий: ${{ github.repository }}
+          Событие: ${{ github.event_name }}
+          Статус сборки: ${{ job.status == 'success' && '🟢 Успешно' || '🔴 Ошибка' }}
+          
+          Посмотреть прогон: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}    
