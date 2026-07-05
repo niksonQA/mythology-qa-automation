@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Set up Python
@@ -24,16 +24,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Start FastAPI Application
+      run: |
+        uvicorn app.sandbox:app --host 127.0.0.1 --port 8080 &
+        sleep 3
+
     - name: Run Pytest
       env:
         PYTHONPATH: .
       run: |
         pytest --alluredir=allure-results
-      continue-on-error: true 
+      continue-on-error: true
 
     - name: Upload Allure Results
       uses: actions/upload-artifact@v4
       with:
         name: allure-results
-        path: allure-results/
+        path: allure-results
         retention-days: 1
