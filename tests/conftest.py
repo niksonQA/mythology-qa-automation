@@ -15,7 +15,7 @@ class ExtensionCharacter(Character):
 # Фикстура в которой находится базовый url-адрес.
 @pytest.fixture
 def base_url():
-    return 'http://127.0.0.1:8080/mythology'
+    return "http://127.0.0.1:8080/mythology"
 
 # Фикстура осуществляющая подключение/отключение от БД.
 @pytest.fixture
