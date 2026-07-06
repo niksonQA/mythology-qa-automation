@@ -4,6 +4,7 @@ import requests
 
 from app.sandbox import CharacterUpdate, CharacterRating
 from conftest import ExtensionCharacter
+from api.api_client import APIClient
 
 
 # ======================================================================
@@ -21,7 +22,7 @@ ids=[
 ])
 
 @allure.title('Отправка POST-запроса на создание нескольких сущностей')
-def test_create_character(base_url, connection_db, payload_type, fake, auth_session):
+def test_create_character(connection_db, payload_type, fake, api_client):
 
     with allure.step('Подготовка данных для осуществления теста и отправки запроса'):
         if payload_type == 'valid':
@@ -30,7 +31,7 @@ def test_create_character(base_url, connection_db, payload_type, fake, auth_sess
             payload = {'name': '', 'role': ''}
  
     with allure.step('Подготовка: Отправка запроса, проверка статус-кода, получение id'):
-        response = requests.post(f'{base_url}', json=payload)
+        response = api_client.create_character(payload=payload)
         assert response.status_code == 201
         data_id = response.json().get('id')
 
@@ -46,22 +47,24 @@ def test_create_character(base_url, connection_db, payload_type, fake, auth_sess
         ExtensionCharacter.model_validate(response.json())
     
     with allure.step('Удаление созданного персонажа из базы данных'):
-        auth_session.delete(f'{base_url}/{data_id}')
+        api_client.delete_character(character_id=data_id)
 
 @pytest.mark.negative
 @allure.title("Отправка запроса без обязательного поля 'role'. ")
-def test_create_character_without_role(base_url, fake):
+def test_create_character_without_role(fake, api_client):
     with allure.step('Отправка POST-запроса'):
-        response = requests.post(f'{base_url}', json={'name': fake.first_name()})
+        payload = {'name': fake.first_name()}
+        response = api_client.create_character(payload=payload)
 
     with allure.step('Проверка обработки 422 статус-кода'):
         assert response.status_code == 422
 
 @pytest.mark.negative
 @allure.title("Отправка запроса на создание персонажа с лишним ключом 'desc' ")
-def test_create_character_invalid_extra_keys(base_url, fake):
+def test_create_character_invalid_extra_keys(fake, api_client):
     with allure.step('Отправка POST-запроса, проверка статус-кода'):
-        response = requests.post(f'{base_url}', json={'name': fake.first_name(), 'role': fake.word(), 'desc': fake.sentence()})
+        payload = {'name': fake.first_name(), 'role': fake.word(), 'desc': fake.sentence()}
+        response = api_client.create_character(payload=payload)
         assert response.status_code == 201
         response_json = response.json()
 
@@ -74,7 +77,7 @@ def test_create_character_invalid_extra_keys(base_url, fake):
 @pytest.mark.smoke
 @pytest.mark.regression
 @allure.title('Создание персонажа и проверка нахождения в БД')
-def test_found_character(base_url, connection_db, create_test_character):
+def test_found_character(connection_db, create_test_character, api_client):
     with allure.step('Фикстура: Создание персонажа'):
         test_character = create_test_character.json()
         character_id = test_character.get('id')
@@ -82,7 +85,7 @@ def test_found_character(base_url, connection_db, create_test_character):
         expected_role = test_character.get('role')
         
     with allure.step('Подготовка: Отправка запроса, проверка статус-кода'):
-        response2 = requests.get(f'{base_url}/{character_id}')
+        response2 = api_client.get_character(character_id=character_id)
         assert response2.status_code == 200
 
     with allure.step('Осуществление выборки необходимых данных из БД'):
@@ -96,9 +99,9 @@ def test_found_character(base_url, connection_db, create_test_character):
 
 @pytest.mark.negative
 @allure.title('Проверка обработки 404 ошибки при просмотре списка персонажей (негатив)')
-def test_found_nonexistent_character(base_url):
+def test_found_nonexistent_character(api_client):
     with allure.step('Отправка запроса на просмотр несуществующего персонажа'):
-        response = requests.get(f'{base_url}/9999999')
+        response = api_client.get_character(character_id=9999999)
 
     with allure.step('Проверка обработки 404 статус-кода'):
         assert response.status_code == 404
@@ -109,18 +112,19 @@ def test_found_nonexistent_character(base_url):
 @pytest.mark.smoke
 @pytest.mark.regression
 @allure.title('Проверка корректности удаления персонажа')
-def test_delete_character(base_url, connection_db, fake, auth_session):
+def test_delete_character(connection_db, fake, api_client):
     with allure.step('Подготовка данных'):
         fake_name = fake.first_name()
         fake_role = fake.word()
 
     with allure.step('Отправка запроса на создание персонажа'):
-        response1 = requests.post(f'{base_url}', json={'name': fake_name, 'role': fake_role})
+        payload = {'name': fake_name, 'role': fake_role}
+        response1 = api_client.create_character(payload=payload)
         assert response1.status_code == 201
         character_id = response1.json().get('id')
 
     with allure.step('Отправка запроса на удаление персонажа'):
-        auth_session.delete(f'{base_url}/{character_id}')
+        api_client.delete_character(character_id=character_id)
 
     with allure.step('SQL-запрос на выборку данных'):
         connection_db.execute('SELECT name, role FROM characters WHERE id = ?', (character_id,))
@@ -131,9 +135,9 @@ def test_delete_character(base_url, connection_db, fake, auth_session):
 
 @pytest.mark.negative
 @allure.title('Проверка обработки 404 ошибки при удалении несуществующего персонажа (негатив)')
-def test_delete_nonexistent_character(base_url, auth_session):
+def test_delete_nonexistent_character(api_client):
     with allure.step('Отправка запроса на удаление несуществующего'):
-        response = auth_session.delete(f'{base_url}/9999')
+        response = api_client.delete_character(character_id=9999)
 
     with allure.step('Проверка обработки 404 статус-кода'):
         assert response.status_code == 404
@@ -144,13 +148,13 @@ def test_delete_nonexistent_character(base_url, auth_session):
 @pytest.mark.smoke
 @pytest.mark.regression
 @allure.title('Проверка рекрутинга персонажа (позитив)')
-def test_recruit_character_valid(base_url, connection_db, auth_session, create_test_character):
+def test_recruit_character_valid(connection_db, create_test_character, api_client):
     with allure.step('Фикстура: создание и подготовка тестовых данных'):
         test_character = create_test_character.json()
         character_id = test_character.get('id')
 
     with allure.step('Выполнение операции рекрутинга персонажа'):
-        response2 = auth_session.post(f'{base_url}/{character_id}/recruit')
+        response2 = api_client.recruit_character(character_id=character_id)
         assert response2.status_code == 200
         data = response2.json()
 
@@ -165,18 +169,18 @@ def test_recruit_character_valid(base_url, connection_db, auth_session, create_t
     
 @pytest.mark.negative
 @allure.title('Проверка рекрутинга несуществующего персонажа (негатив)')
-def test_recruit_character_invalid(base_url, auth_session):
+def test_recruit_character_invalid(api_client):
     with allure.step('Отправка запроса на рекрутинг с несуществующим ID'):
-        response = auth_session.post(f'{base_url}/99999/recruit')
+        response = api_client.recruit_character(character_id=99999)
 
     with allure.step('Проверка возврата 404 статус-кода'):
         assert response.status_code == 404
 
 @pytest.mark.negative
 @allure.title('Проверка передачи некорректного типа данных (негатив)')
-def test_recruit_character_invalid_type(base_url, auth_session):
+def test_recruit_character_invalid_type(api_client):
     with allure.step('Отправка запроса на рекрутинг со строкой вместо ID'):
-        response = auth_session.post(f'{base_url}/mike_angeles/recruit')
+        response = api_client.recruit_character(character_id='mike_angel')
 
     with allure.step('Проверка возврата 422 статус-кода'):
         assert response.status_code == 422
@@ -187,7 +191,7 @@ def test_recruit_character_invalid_type(base_url, auth_session):
 @pytest.mark.smoke
 @pytest.mark.regression
 @allure.title('Проверка изменения данных у существующего персонажа (позитив)')
-def test_update_character_valid(base_url, connection_db, create_test_character):
+def test_update_character_valid(connection_db, create_test_character, api_client):
     with allure.step('Фикстура: создание тестовых данных'):
         test_character = create_test_character.json()
         data_id = test_character.get('id')
@@ -203,7 +207,8 @@ def test_update_character_valid(base_url, connection_db, create_test_character):
 
     with allure.step('Подготовка: отправка запроса на изменение данных у существующего персонажа'):
         new_role = 'Head of QA'
-        response2 = requests.patch(f'{base_url}/{data_id}', json={'role': new_role})
+        payload = {'role': new_role}
+        response2 = api_client.update_character(character_id=data_id, payload=payload)
         assert response2.status_code == 200
 
     with allure.step('Отправка SQL-запроса для убеждения в изменении роли'):
@@ -216,31 +221,33 @@ def test_update_character_valid(base_url, connection_db, create_test_character):
 
 @pytest.mark.negative
 @allure.title('Проверка обновления данных у несуществующего персонажа (негатив)')
-def test_update_character_invalid(base_url, fake):
+def test_update_character_invalid(fake, api_client):
     with allure.step('Генерация фейкового имени'):
         generate_name = fake.first_name()
+        payload = {'name': generate_name}
 
     with allure.step('Отправка запроса на обновление данных'):
-        response = requests.patch(f'{base_url}/9999', json={'name': generate_name})
+        response = api_client.update_character(character_id=9999, payload=payload)
 
     with allure.step('Проверка возврата 404 статус-кода'):
         assert response.status_code == 404
 
 @pytest.mark.negative
 @allure.title('Проверка обновления данных при передачи некорректного типа данных (негатив)')
-def test_update_character_invalid_type(base_url, fake):
+def test_update_character_invalid_type(fake, api_client):
     with allure.step('Генерация фейковой роли'):
         generate_role = fake.word()
+        payload = {'role': generate_role}
 
     with allure.step('Отправка запроса на обновление данных'):
-        response = requests.patch(f'{base_url}/{generate_role}')
+        response = api_client.update_character(character_id=None, payload=payload)
 
     with allure.step('Проверка возврата 422 статус-кода'):
         assert response.status_code == 422
 
 @pytest.mark.negative
 @allure.title('Проверка обновления данных при нарушении контракта (негатив)')
-def test_update_character_invalid_schema(base_url, create_test_character):
+def test_update_character_invalid_schema(create_test_character, api_client):
     with allure.step('Создание невалидных тестовых данных'):
         invalid_payload = {
             'name': {'first_name': 'Ivan', 'last_name': 'Ivanov'}
@@ -250,7 +257,7 @@ def test_update_character_invalid_schema(base_url, create_test_character):
         character_id = create_test_character.json().get('id')
 
     with allure.step('Отправка запроса на частичное обновление данных'):
-        response = requests.patch(f'{base_url}/{character_id}', json=invalid_payload)
+        response = api_client.update_character(character_id=character_id, payload=invalid_payload)
         assert response.status_code == 422
 
     with allure.step('Проверка соответствия контракта'):
@@ -262,7 +269,7 @@ def test_update_character_invalid_schema(base_url, create_test_character):
 @pytest.mark.smoke
 @pytest.mark.regression
 @allure.title('Проверка получения рейтинга персонажа (позитив)')
-def test_character_rating(base_url, create_test_character, mocker):
+def test_character_rating(create_test_character, mocker, api_client):
     with allure.step('Подготовка данных'):
         mock_response = mocker.Mock()
         test_character = create_test_character.json()
@@ -277,10 +284,10 @@ def test_character_rating(base_url, create_test_character, mocker):
     with allure.step('Создание мока'):
         mock_response.status_code = 200
         mock_response.json.return_value=payload
-        mocker.patch('requests.get', return_value=mock_response)
+        mocker.patch('requests.Session.get', return_value=mock_response)
 
     with allure.step('Отправка запроса и проверка возвращения 200 статус-кода'):
-        result = requests.get(f'{base_url}/{test_id}/rating')
+        result = api_client.get_character_rating(character_id=test_id)
         assert result.status_code == 200
         result_json = result.json()
 
@@ -294,7 +301,7 @@ def test_character_rating(base_url, create_test_character, mocker):
 
 @pytest.mark.negative
 @allure.title('Проверка получения рейтинга несуществующего персонажа (негатив)')
-def test_character_rating_not_found(base_url, mocker):
+def test_character_rating_not_found(mocker, api_client):
     with allure.step('Подготовка данных'):
         mock_response = mocker.Mock()
         invalid_id = 9999
@@ -305,18 +312,19 @@ def test_character_rating_not_found(base_url, mocker):
     with allure.step('Создание мока'):
         mock_response.status_code = 404
         mock_response.json.return_value=payload
-        mocker.patch('requests.get', return_value=mock_response)
+        mocker.patch('requests.Session.get', return_value=mock_response)
 
     with allure.step('Отправка запроса и проверка возвращения 404 статус-кода'):
-        result = requests.get(f'{base_url}/{invalid_id}/rating')
+        result = api_client.get_character_rating(character_id=invalid_id)
         assert result.status_code == 404
         result_json = result.json()
+
     with allure.step('Проверка текста ошибки'):
         assert 'Character not found' in result_json['detail']
 
 @pytest.mark.negative
 @allure.title('Проверка получения рейтинга персонажа при internal error (негатив)')
-def test_character_rating_server_error(base_url, mocker):
+def test_character_rating_server_error(mocker, api_client):
     with allure.step('Подготовка данных'):
         mock_response = mocker.Mock()
         invalid_id = 9999
@@ -327,15 +335,12 @@ def test_character_rating_server_error(base_url, mocker):
     with allure.step('Создание мока'):
         mock_response.status_code = 500
         mock_response.json.return_value=payload
-        mocker.patch('requests.get', return_value=mock_response)
+        mocker.patch('requests.Session.get', return_value=mock_response)
 
     with allure.step('Отправка запроса и проверка возвращения 500 статус-кода'):
-        result = requests.get(f'{base_url}/{invalid_id}/rating')
+        result = api_client.get_character_rating(character_id=invalid_id)
         assert result.status_code == 500
         result_json = result.json()
 
     with allure.step('Проверка текста ошибки'):
         assert "Не удалось получить ответ от внешнего сервиса рейтингов." in result_json['detail']
-    
-    
-

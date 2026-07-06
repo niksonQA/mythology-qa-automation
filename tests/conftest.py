@@ -6,6 +6,7 @@ import requests
 from faker import Faker
 
 from app.sandbox import Character
+from api.api_client import APIClient
 
 
 # Классы для проверки контракта
@@ -31,6 +32,7 @@ def connection_db():
 def fake():
     return Faker()
 
+# Фикстура автоматически подставляющая заголовок Authorization, со свежим токеном.
 @pytest.fixture
 def auth_session(base_url):
     session = requests.Session()
@@ -41,15 +43,22 @@ def auth_session(base_url):
     session.headers.update({'Authorization': f'Bearer {token}'})
     yield session
     session.close()
-    
+
+# Фикстура для быстрого создания персонажа.
 @pytest.fixture
-def create_test_character(base_url, fake, auth_session):
+def create_test_character(fake, api_client):
     with allure.step('Фикстура: Создание тестового персонажа'):
         generate_name = fake.first_name()
         generate_role = fake.word()
-        response = auth_session.post(f'{base_url}', json={'name': generate_name, 'role': generate_role})
+        payload = {'name': generate_name, 'role': generate_role}
+        response = api_client.create_character(payload=payload)
         data_id = response.json().get('id')
     yield response
     with allure.step('Фикстура: Авто-удаление тестового персонажа'):
         if data_id:
-            auth_session.delete(f'{base_url}/{data_id}')
+            api_client.delete_character(character_id=data_id)
+
+# Фикстура инициализирующая и возвращающая клиент для отправки запросов.
+@pytest.fixture
+def api_client(base_url, auth_session):
+    return APIClient(base_url=base_url, auth_session=auth_session)
