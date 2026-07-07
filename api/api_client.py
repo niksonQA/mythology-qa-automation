@@ -8,6 +8,9 @@ class APIClient:
     def log_response(self, response):
         logging.info(f'Request: {response.request.method} {response.request.url}')
         logging.info(f'Response: {response.status_code} {response.text}')
+        if 'Mock' in str(type(response)):
+            logging.info(f'Request/Respoonse: Использовался Mock-объект в тесте')
+            return
 
     def create_character(self, payload):
         response = self.auth_session.post(f'{self.base_url}', json=payload)
