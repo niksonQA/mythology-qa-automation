@@ -1,0 +1,6 @@
+[32mINFO    [0m root:api_client.py:9 Request: POST http://127.0.0.1:8080/mythology
+[32mINFO    [0m root:api_client.py:10 Response: 201 {"id":69,"name":"Michelle","role":"marriage"}
+[32mINFO    [0m root:api_client.py:9 Request: POST http://127.0.0.1:8080/mythology/69/recruit
+[32mINFO    [0m root:api_client.py:10 Response: 200 {"id":69,"name":"Michelle","role":"marriage","status":"recruited"}
+[32mINFO    [0m root:api_client.py:9 Request: DELETE http://127.0.0.1:8080/mythology/69
+[32mINFO    [0m root:api_client.py:10 Response: 204

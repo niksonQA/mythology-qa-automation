@@ -1,0 +1,6 @@
+[32mINFO    [0m root:api_client.py:9 Request: POST http://127.0.0.1:8080/mythology
+[32mINFO    [0m root:api_client.py:10 Response: 201 {"id":72,"name":"Wesley","role":"bank"}
+[32mINFO    [0m root:api_client.py:9 Request: <Mock name='mock.request.method' id='2704271496528'> <Mock name='mock.request.url' id='2704271493840'>
+[32mINFO    [0m root:api_client.py:10 Response: 200 <Mock name='mock.text' id='2704271496192'>
+[32mINFO    [0m root:api_client.py:9 Request: DELETE http://127.0.0.1:8080/mythology/72
+[32mINFO    [0m root:api_client.py:10 Response: 204

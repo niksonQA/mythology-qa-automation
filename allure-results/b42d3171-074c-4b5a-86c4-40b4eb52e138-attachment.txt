@@ -1,0 +1,6 @@
+[32mINFO    [0m root:api_client.py:9 Request: POST http://127.0.0.1:8080/mythology
+[32mINFO    [0m root:api_client.py:10 Response: 201 {"id":71,"name":"Anthony","role":"could"}
+[32mINFO    [0m root:api_client.py:9 Request: PATCH http://127.0.0.1:8080/mythology/71
+[32mINFO    [0m root:api_client.py:10 Response: 422 {"detail":[{"type":"string_type","loc":["body","name"],"msg":"Input should be a valid string","input":{"first_name":"Ivan","last_name":"Ivanov"}}]}
+[32mINFO    [0m root:api_client.py:9 Request: DELETE http://127.0.0.1:8080/mythology/71
+[32mINFO    [0m root:api_client.py:10 Response: 204

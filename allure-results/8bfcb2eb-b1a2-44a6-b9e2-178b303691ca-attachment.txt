@@ -1,0 +1,2 @@
+[32mINFO    [0m root:api_client.py:9 Request: DELETE http://127.0.0.1:8080/mythology/9999
+[32mINFO    [0m root:api_client.py:10 Response: 404 {"detail":"Character not found"}

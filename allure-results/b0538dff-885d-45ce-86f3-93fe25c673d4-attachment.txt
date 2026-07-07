@@ -1,0 +1,2 @@
+[32mINFO    [0m root:api_client.py:9 Request: POST http://127.0.0.1:8080/mythology/99999/recruit
+[32mINFO    [0m root:api_client.py:10 Response: 404 {"detail":"Character not found"}

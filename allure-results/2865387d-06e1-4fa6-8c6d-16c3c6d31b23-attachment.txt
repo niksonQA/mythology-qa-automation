@@ -1,0 +1,4 @@
+[32mINFO    [0m root:api_client.py:9 Request: POST http://127.0.0.1:8080/mythology
+[32mINFO    [0m root:api_client.py:10 Response: 201 {"id":68,"name":"Ryan","role":"tree"}
+[32mINFO    [0m root:api_client.py:9 Request: DELETE http://127.0.0.1:8080/mythology/68
+[32mINFO    [0m root:api_client.py:10 Response: 204
