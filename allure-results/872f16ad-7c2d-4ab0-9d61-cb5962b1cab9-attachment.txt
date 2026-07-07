@@ -1,2 +1,0 @@
-[32mINFO    [0m root:api_client.py:9 Request: <Mock name='mock.request.method' id='2704271494512'> <Mock name='mock.request.url' id='2704271494848'>
-[32mINFO    [0m root:api_client.py:10 Response: 404 <Mock name='mock.text' id='2704271495184'>
