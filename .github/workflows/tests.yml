@@ -33,7 +33,7 @@ jobs:
       env:
         PYTHONPATH: .
       run: |
-        pytest --alluredir=allure-results
+        pytest --alluredir=allure-results -s
       continue-on-error: true
 
     - name: Upload Allure Results
