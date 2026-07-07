@@ -7,7 +7,7 @@ class APIClient:
     
     def log_response(self, response):
         if 'Mock' in str(type(response)):
-            logging.info(f'Request/Respoonse: Использовался Mock-объект в тесте')
+            logging.info(f'Request/Response: Использовался Mock-объект в тесте')
             return
         
         logging.info(f'Request: {response.request.method} {response.request.url}')
