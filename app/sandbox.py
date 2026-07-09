@@ -30,7 +30,8 @@ cursor.execute("""
     CREATE TABLE IF NOT EXISTS characters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        role TEXT
+        role TEXT,
+        age INTEGER
     )
 """)
 conn.commit()
@@ -40,6 +41,7 @@ conn.commit()
 class Character(BaseModel):
     name: str
     role: str
+    age: int
 
 class LoginRequest(BaseModel):
     username: str
@@ -103,10 +105,19 @@ def login(auth_data: LoginRequest):
 
 @app.post("/mythology", status_code=201)
 def create_character(char: Character):
-    cursor.execute("INSERT INTO characters (name, role) VALUES (?, ?)", (char.name, char.role))
+    if char.age < 18:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Age must be 18 or older"
+        )
+    cursor.execute(
+        "INSERT INTO characters (name, role, age) VALUES (?, ?, ?)", 
+        (char.name, char.role, char.age)
+    )
     conn.commit()
     char_id = cursor.lastrowid
-    return {"id": char_id, "name": char.name, "role": char.role}
+    
+    return {"id": char_id, "name": char.name, "role": char.role, "age": char.age}
 
 
 @app.get("/mythology/{char_id}", status_code=200)

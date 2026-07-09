@@ -13,22 +13,21 @@ from api.api_client import APIClient
 @pytest.mark.smoke
 @pytest.mark.regression
 @pytest.mark.parametrize('payload_type', [
-    'valid',
-    'zero'
+    'boundary',
+    'high boundary'
 ],
 ids=[
-    'create valid character',
-    'create zero character'
+    'create valid_1 character',
+    'create valid_2 character'
 ])
 
-@allure.title('Отправка POST-запроса на создание нескольких сущностей')
-def test_create_character(connection_db, payload_type, fake, api_client):
-
+@allure.title('Отправка POST-запроса на создание нескольких сущностей (позитив)')
+def test_create_valid_character(connection_db, payload_type, fake, api_client):
     with allure.step('Подготовка данных для осуществления теста и отправки запроса'):
-        if payload_type == 'valid':
-            payload = {'name': fake.first_name(), 'role': fake.word()}
+        if payload_type == 'boundary':
+            payload = {'name': fake.first_name(), 'role': fake.word(), 'age': 18}
         else:
-            payload = {'name': '', 'role': ''}
+            payload = {'name': fake.first_name(), 'role': fake.word(), 'age': 19}
  
     with allure.step('Подготовка: Отправка запроса, проверка статус-кода, получение id'):
         response = api_client.create_character(payload=payload)
@@ -50,6 +49,30 @@ def test_create_character(connection_db, payload_type, fake, api_client):
         api_client.delete_character(character_id=data_id)
 
 @pytest.mark.negative
+@pytest.mark.parametrize('payload_type, expected_status', [
+    ('low boundary', 400),
+    ('empty', 422)
+],
+ids=[
+    'create inalid character',
+    'create empty character'
+])
+
+@allure.title('Отправка POST-запроса на создание нескольких сущностей с некорректным возрастом (негатив)')
+def test_create_invalid_character(payload_type, fake, api_client, expected_status):
+    with allure.step('Подготовка данных для осуществления теста'):
+        if payload_type == 'low boundary':
+            payload = {'name': fake.first_name(), 'role': fake.word(), 'age': 17}
+        else:
+            payload = {'name': '', 'role': '', 'age': ''}
+ 
+    with allure.step('Отправка запроса'):
+        response = api_client.create_character(payload=payload)
+    
+    with allure.step('Проверка обработки 422 и 400 статус-кода'):
+        assert response.status_code == expected_status
+
+@pytest.mark.negative
 @allure.title("Отправка запроса без обязательного поля 'role'. ")
 def test_create_character_without_role(fake, api_client):
     with allure.step('Отправка POST-запроса'):
@@ -65,12 +88,10 @@ def test_create_character_invalid_extra_keys(fake, api_client):
     with allure.step('Отправка POST-запроса, проверка статус-кода'):
         payload = {'name': fake.first_name(), 'role': fake.word(), 'desc': fake.sentence()}
         response = api_client.create_character(payload=payload)
-        assert response.status_code == 201
-        response_json = response.json()
-
-    with allure.step('Проверка отсутствия ключа "desc" в теле ответа'):
-        assert 'desc' not in response_json
     
+    with allure.step('Проверка обработки 422 статус-кода'):
+        assert response.status_code == 422
+
 # ======================================================================
 # ТЕСТ №2: Отправка запроса на просмотр содержимого в базе данных.
 # ======================================================================
@@ -118,7 +139,7 @@ def test_delete_character(connection_db, fake, api_client):
         fake_role = fake.word()
 
     with allure.step('Отправка запроса на создание персонажа'):
-        payload = {'name': fake_name, 'role': fake_role}
+        payload = {'name': fake_name, 'role': fake_role, 'age': 18}
         response1 = api_client.create_character(payload=payload)
         assert response1.status_code == 201
         character_id = response1.json().get('id')

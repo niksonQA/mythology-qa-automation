@@ -50,7 +50,7 @@ def create_test_character(fake, api_client):
     with allure.step('Фикстура: Создание тестового персонажа'):
         generate_name = fake.first_name()
         generate_role = fake.word()
-        payload = {'name': generate_name, 'role': generate_role}
+        payload = {'name': generate_name, 'role': generate_role, 'age': 18}
         response = api_client.create_character(payload=payload)
         data_id = response.json().get('id')
     yield response
