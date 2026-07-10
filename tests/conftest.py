@@ -9,7 +9,7 @@ from app.sandbox import Character
 from api.api_client import APIClient
 
 
-# Классы для проверки контракта
+# Базовый контракт: содержит общую проверку ID для POST-запроса.
 class ExtensionCharacter(Character):
     id: int
     
@@ -62,3 +62,12 @@ def create_test_character(fake, api_client):
 @pytest.fixture
 def api_client(base_url, auth_session):
     return APIClient(base_url=base_url, auth_session=auth_session)
+
+# Хук который aвтоматически заменяет пробелы на подчёркивания во всех ручных ids параметризации
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        if ' ' in item.name:
+            item._nodeid = item._nodeid.replace(' ', '_')
+            item.name = item.name.replace(' ', '_')
+
+
